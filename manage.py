@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Django's command-line utility for administrative tasks."""
+from django.contrib.auth import get_user_model
 import os
 import sys
 
@@ -20,3 +21,14 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# Código temporário para criar o admin no deploy
+try:
+    User = get_user_model()
+    if not User.objects.filter(username='admin').exists():
+        User.objects.create_superuser(
+            'admin', 'ferdomingue@gmail.com', 'Nin@1501')
+        print("Superusuário 'admin' criado com sucesso!")
+except Exception as e:
+    print(f"Erro ao criar superusuário: {e}")

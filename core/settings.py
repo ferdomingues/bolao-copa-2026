@@ -144,6 +144,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Para onde o usuário vai após logar com sucesso
 LOGIN_REDIRECT_URL = 'home'
+LOGOUT_REDIRECT_URL = 'login'
 
 # Para onde o usuário é enviado se tentar acessar uma página protegida
 LOGIN_URL = 'login'
