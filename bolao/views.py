@@ -10,6 +10,8 @@ from django.contrib.auth.models import User
 from django.db.models import Sum
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login, logout
+from django.http import HttpResponse
+from django.core.management import call_command
 
 
 def tabela_campeonato_view(request):
@@ -155,3 +157,9 @@ def dashboard_view(request):
 def logout_personalizado_view(request):
     logout(request)
     return redirect('login')
+
+
+def trigger_atualizacao(request):
+    # Isto executa o seu comando 'importar_jogos' como se fosses tu no terminal
+    call_command('importar_jogos')
+    return HttpResponse("Jogos atualizados com sucesso!")
