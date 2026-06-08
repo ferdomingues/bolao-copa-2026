@@ -1,3 +1,4 @@
+import os
 import requests
 from django.core.management.base import BaseCommand
 from django.db import IntegrityError
@@ -13,7 +14,8 @@ class Command(BaseCommand):
             'Iniciando integração oficial com a API da Copa...'))
 
         # Lembre-se de idealmente mover isso para variáveis de ambiente no futuro!
-        headers = {"X-API-Key": "zwc_free_bed2100142b87a3f4e55d3c7"}
+        api_key = os.environ.get("ZAFRONIX_API_KEY", "")
+        headers = {"X-API-Key": api_key}
 
         # ==========================================
         # PASSO 1: CARREGAR AS SELEÇÕES
