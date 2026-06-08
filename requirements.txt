@@ -5,6 +5,7 @@ dj-database-url==3.1.2
 Django==5.2.14
 gunicorn==26.0.0
 idna==3.18
+mysqlclient==2.2.8
 packaging==26.2
 psycopg2-binary==2.9.12
 requests==2.34.2
