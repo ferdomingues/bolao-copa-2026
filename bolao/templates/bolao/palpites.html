@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meus Palpites - Copa 2026</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .input-placar {
+            width: 60px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        .card-jogo {
+            transition: transform 0.2s;
+        }
+        .card-jogo:hover {
+            transform: scale(1.01);
+        }
+        /* Estilo visual para campos trancados (palpite salvo) */
+        .input-placar[readonly] {
+            background-color: #e9ecef;
+            border-color: #ced4da;
+            color: #495057;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4 shadow-sm">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="{% url 'home' %}">⚽ Bolão da Copa</a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'home' %}">Início</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'lista_palpites' %}">Meus Palpites</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'classificacao_bolao' %}">Classificação Bolão</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'tabela_campeonato' %}">Classificação Copa</a>
+                </li>
+            </ul>
+
+            <div class="d-flex">
+                <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">Sair</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-5" style="max-width: 1050px;">
+    <h1 class="mb-2 text-center">🎯 Meus Palpites</h1>
+    <p class="text-muted text-center mb-4">Preencha os placares e clique em salvar em cada jogo.</p>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% for jogo in jogos %}
+        
+        {% ifchanged jogo.data_hora|date:"Y-m-d" %}
+            <h5 class="mt-4 mb-3 text-secondary bg-white p-2 rounded shadow-sm border-start border-primary border-4">
+                📅 {{ jogo.data_hora|date:"l, d \d\e F \d\e Y" }}
+            </h5>
+        {% endifchanged %}
+
+        <div class="card shadow-sm mb-3 card-jogo" id="jogo-{{ jogo.id }}">
+            <div class="card-body px-4 py-3">
+                <form method="post" action="{% url 'salvar_palpite' jogo.id %}" class="form-jogo">
+                    {% csrf_token %}
+                    <div class="row align-items-center">
+                        
+                        <div class="col-12 col-md-4 text-md-start text-center mb-3 mb-md-0">
+                            <span class="badge bg-dark">{{ jogo.data_hora|date:"H:i" }}</span>
+                            <small class="text-muted ms-2 fw-semibold">{{ jogo.get_fase_display }}</small>
+                            
+                            {% if not jogo.bloqueado %}
+                                <div class="text-danger mt-2" style="font-size: 0.75rem; white-space: nowrap;">
+                                    ⚠️ <span class="countdown fw-bold" data-timestamp="{{ jogo.data_fechamento|date:'U' }}">--d --h --m --s</span>
+                                    <span class="text-muted">faltantes para encerrar a aposta</span>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-12 col-md-6 d-flex align-items-center justify-content-center mb-3 mb-md-0">
+                            
+                            <div class="d-flex align-items-center justify-content-end flex-grow-1 text-end" style="width: 42%; min-width: 0;">
+                                <span class="me-2 fw-semibold text-truncate" title="{{ jogo.selecao_casa.nome }}">{{ jogo.selecao_casa.nome }}</span>
+                                {% if jogo.selecao_casa.bandeira_url %}
+                                    <img src="{{ jogo.selecao_casa.bandeira_url }}" width="30" class="rounded shadow-sm flex-shrink-0">
+                                {% endif %}
+                            </div>
+
+                            <div class="d-flex align-items-center justify-content-center flex-shrink-0 mx-3" style="width: 140px;">
+                                <input type="number" name="gols_casa" min="0" class="form-control input-placar mx-1" 
+                                    {% if jogo.bloqueado %}disabled{% endif %}
+                                    value="{% for id_jogo, p in meus_palpites.items %}{% if id_jogo == jogo.id %}{{ p.gols_casa }}{% endif %}{% endfor %}">
+                                
+                                <span class="fw-bold text-muted px-1">X</span>
+                                
+                                <input type="number" name="gols_fora" min="0" class="form-control input-placar mx-1" 
+                                    {% if jogo.bloqueado %}disabled{% endif %}
+                                    value="{% for id_jogo, p in meus_palpites.items %}{% if id_jogo == jogo.id %}{{ p.gols_fora }}{% endif %}{% endfor %}">
+                            </div>
+
+                            <div class="d-flex align-items-center justify-content-start flex-grow-1 text-start" style="width: 42%; min-width: 0;">
+                                {% if jogo.selecao_fora.bandeira_url %}
+                                    <img src="{{ jogo.selecao_fora.bandeira_url }}" width="30" class="rounded shadow-sm me-2 flex-shrink-0">
+                                {% endif %}
+                                <span class="fw-semibold text-truncate" title="{{ jogo.selecao_fora.nome }}">{{ jogo.selecao_fora.nome }}</span>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-md-2 text-md-end text-center d-flex align-items-center justify-content-md-end justify-content-center">
+                            {% if jogo.bloqueado %}
+                                <span class="badge bg-danger px-3 py-2 shadow-sm w-100 text-center">
+                                    🔒 Encerrado
+                                </span>
+                            {% else %}
+                                <button type="submit" class="btn btn-sm btn-outline-primary px-3 py-2 shadow-sm w-100 btn-acao-palpite">
+                                    💾 Salvar
+                                </button>
+                            {% endif %}
+                        </div>
+
+                    </div>
+
+                    {% if jogo.gols_casa is not None and jogo.gols_fora is not None %}
+                        <div class="row mt-2 justify-content-center">
+                            <div class="col-12 col-md-6">
+                                <div class="p-1.5 bg-light border-start border-primary border-4 text-primary text-center rounded-end small">
+                                    <strong>Resultado Oficial:</strong> {{ jogo.gols_casa }} x {{ jogo.gols_fora }}
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    {% empty %}
+        <div class="alert alert-warning text-center">Nenhum jogo localizado na tabela cronológica.</div>
+    {% endfor %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // LÓGICA DE CONTROLE DE BOTÕES (EDITAR / SALVAR) E INPUTS BLOQUEADOS
+    document.addEventListener("DOMContentLoaded", function() {
+        document.querySelectorAll('.form-jogo').forEach(form => {
+            const inputCasa = form.querySelector('input[name="gols_casa"]');
+            const inputFora = form.querySelector('input[name="gols_fora"]');
+            const btnAcao = form.querySelector('.btn-acao-palpite');
+
+            // Se o jogo já estiver bloqueado por tempo, pula esta validação
+            if (!btnAcao) return;
+
+            // Se ambos os campos têm valor preenchido (significa que já existe palpite no banco)
+            if (inputCasa.value !== "" && inputFora.value !== "") {
+                // Tranca os inputs
+                inputCasa.readOnly = true;
+                inputFora.readOnly = true;
+
+                // Modifica o botão para o modo "Editar"
+                btnAcao.innerHTML = "✏️ Editar";
+                btnAcao.classList.remove('btn-outline-primary');
+                btnAcao.classList.add('btn-outline-warning');
+                btnAcao.dataset.mode = "edit";
+            } else {
+                btnAcao.dataset.mode = "save";
+            }
+
+            // Escuta o envio do formulário
+            form.addEventListener('submit', function(e) {
+                if (btnAcao.dataset.mode === "edit") {
+                    // Impede o envio do form se estiver no modo Editar
+                    e.preventDefault();
+
+                    // Destranca os inputs para digitação
+                    inputCasa.readOnly = false;
+                    inputFora.readOnly = false;
+                    inputCasa.focus();
+
+                    // Transforma o botão de volta em "Salvar"
+                    btnAcao.innerHTML = "💾 Salvar";
+                    btnAcao.classList.remove('btn-outline-warning');
+                    btnAcao.classList.add('btn-outline-primary');
+                    btnAcao.dataset.mode = "save";
+                }
+                // Se o modo for "save", ele prossegue e envia o formulário nativamente para a View
+            });
+        });
+    });
+
+    // CONTADOR REGRESSIVO
+    function updateCountdowns() {
+        const now = Math.floor(Date.now() / 1000);
+        document.querySelectorAll('.countdown').forEach(el => {
+            const target = parseInt(el.getAttribute('data-timestamp'));
+            const diff = target - now;
+
+            if (diff > 0) {
+                const days = Math.floor(diff / 86400);
+                const hours = Math.floor((diff % 86400) / 3600);
+                const minutes = Math.floor((diff % 3600) / 60);
+                const seconds = diff % 60;
+
+                el.innerText = `${days}d ${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
+            } else {
+                const container = el.closest('.text-danger');
+                if (container) {
+                    container.className = "text-muted mt-2 fw-bold";
+                    container.innerHTML = "🔒 Apostas encerradas";
+                }
+            }
+        });
+    }
+    setInterval(updateCountdowns, 1000);
+    updateCountdowns();
+</script>
+
+</body>
+</html>
