@@ -106,3 +106,42 @@ def gerenciar_perfil_usuario(sender, instance, created, **kwargs):
     else:
         if hasattr(instance, 'perfil'):
             instance.perfil.save()
+
+# ==========================================
+# GATILHO DE CÁLCULO DE PONTOS AUTOMÁTICO
+# ==========================================
+
+
+@receiver(post_save, sender=Jogo)
+def calcular_pontos_palpites(sender, instance, **kwargs):
+    # Só calcula se o jogo já aconteceu e tem um placar oficial
+    if instance.gols_casa is not None and instance.gols_fora is not None:
+
+        # Busca todos os palpites que os usuários fizeram para ESTE jogo
+        palpites = Palpite.objects.filter(jogo=instance)
+
+        # Calcula o saldo oficial do jogo (Positivo = Casa venceu, Negativo = Fora venceu, Zero = Empate)
+        resultado_oficial = instance.gols_casa - instance.gols_fora
+
+        for palpite in palpites:
+            pontos = 0
+
+            # Se o usuário preencheu o palpite
+            if palpite.gols_casa is not None and palpite.gols_fora is not None:
+                resultado_palpite = palpite.gols_casa - palpite.gols_fora
+
+                # REGRA 1: Acertou o placar EXATO (ex: apostou 2x0 e foi 2x0)
+                if palpite.gols_casa == instance.gols_casa and palpite.gols_fora == instance.gols_fora:
+                    pontos = 5
+
+                # REGRA 2: Acertou apenas a TENDÊNCIA (Vencedor ou Empate)
+                # (ex: apostou 2x1 para o México, e o México venceu por 2x0)
+                elif (resultado_oficial > 0 and resultado_palpite > 0) or \
+                     (resultado_oficial < 0 and resultado_palpite < 0) or \
+                     (resultado_oficial == 0 and resultado_palpite == 0):
+                    pontos = 3
+
+            # Atualiza os pontos deste palpite no banco de dados
+            if palpite.pontos_ganhos != pontos:
+                palpite.pontos_ganhos = pontos
+                palpite.save()

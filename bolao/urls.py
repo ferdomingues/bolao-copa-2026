@@ -24,4 +24,7 @@ urlpatterns = [
         authentication_form=LoginFormPersonalizado
     ), name='login'),
 
-    path('logout/', views.logout_personalizado_view, name='logout'),]
+    path('logout/', views.logout_personalizado_view, name='logout'),
+
+    path('executar-atualizacao/', views.trigger_atualizacao, name='atualizar_jogos'),
+]

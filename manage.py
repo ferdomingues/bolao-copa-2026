@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Django's command-line utility for administrative tasks."""
+from django.contrib.auth import get_user_model
 import os
 import sys
 
@@ -20,3 +21,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
