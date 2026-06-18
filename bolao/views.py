@@ -12,6 +12,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login, logout
 from django.http import HttpResponse
 from django.core.management import call_command
+import threading
 
 
 def tabela_campeonato_view(request):
@@ -176,5 +177,10 @@ def logout_personalizado_view(request):
 
 
 def trigger_atualizacao(request):
-    call_command('importar_jogos')
-    return HttpResponse("Jogos atualizados com sucesso!")
+    # Cria uma thread (processo em segundo plano) para rodar o comando
+    # Assim o Python não fica travado esperando o comando terminar
+    thread = threading.Thread(target=call_command, args=('importar_jogos',))
+    thread.start()
+
+    # Devolve a resposta na mesma hora para o cron-job.org não dar timeout
+    return HttpResponse("Recebido! O servidor do Render foi acordado e a atualização está rodando em background.")
